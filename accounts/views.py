@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework import status
+from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import CustomUserSerializer
+from .serializers import CustomUserSerializer, DeleteAccountSerializer
 from rest_framework import serializers
 
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -50,6 +50,20 @@ class LogoutView(APIView):
             return Response({"detail": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteAccountView(generics.GenericAPIView):
+    serializer_class = DeleteAccountSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 비밀번호가 올바른 경우 계정 삭제
+        user.delete()
+        return Response({"message": "계정이 성공적으로 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

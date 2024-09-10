@@ -1,6 +1,8 @@
 
 from rest_framework import serializers
 from .models import CustomUser
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -26,3 +28,13 @@ class CustomUserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
+    def validate_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("비밀번호가 일치하지 않습니다.")
+        return value
